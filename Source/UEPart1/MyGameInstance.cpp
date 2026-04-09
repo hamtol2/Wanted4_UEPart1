@@ -2,93 +2,95 @@
 
 
 #include "MyGameInstance.h"
+#include "Student.h"
+#include "Teacher.h"
+
+UMyGameInstance::UMyGameInstance()
+{
+	// 기본 값은 CDO라는 특별한 템플릿 객체에 저장됨.
+	SchoolName = TEXT("기본학교");
+}
 
 void UMyGameInstance::Init()
 {
 	Super::Init();
 
-	// 로그 출력.
-	UE_LOG(LogTemp, Log, TEXT("%s"), TEXT("Hello Unreal"));
+	// 클래스 정보 가져오기.
+	UClass* ClassRuntime = GetClass();
+	UClass* ClassCompile = UMyGameInstance::StaticClass();
 
-	// TCHAR | FString.
-	TCHAR LogCharArray[] = TEXT("Hello Unreal2");
-	// UE_LOG 함수.
-	// Log 카테고리(타입).
-	// 로그 수준(Log, Warning, Error).
-	// 포맷 (format, 서식) - 출력할 값의 타입.
-	// 가변 인자: 포맷에 지정한 타입에 알맞은 값을 전달.
-	UE_LOG(LogTemp, Log, TEXT("%s"), LogCharArray);
+	// 어서트.
+	//check(ClassRuntime != ClassCompile);	// 크래시까지 발생시키는 어써트.
+	//ensure(ClassRuntime != ClassCompile);	// 출력 로그 창에 오류 표시.
+	//ensureAlways()
 
-	FString LogCharString = LogCharArray;
-	UE_LOG(LogTemp, Log, TEXT("%s"), *LogCharString);
-
-	// FString에서 TCHAR 포인터를 가져오는 방법.
-	const TCHAR* LogCharPtr = *LogCharString;
-	TCHAR* LogCharDataPtr = LogCharString.GetCharArray().GetData();
-
-	// 문자열 복사.
-	TCHAR LogCharArrayWithSize[100] = {};
-	FCString::Strcpy(
-		LogCharArrayWithSize, 
-		LogCharString.Len(),
-		*LogCharString
+	// 클래스 이름 출력.
+	UE_LOG(
+		LogTemp, 
+		Log, 
+		TEXT("학교를 담당하는 클래스: %s %s"),
+		*ClassRuntime->GetName(),
+		*ClassCompile->GetName()
 	);
 
-	// 복사된 문자열 출력.
-	UE_LOG(LogTemp, Log, TEXT("%s"), LogCharArrayWithSize);
+	SchoolName = TEXT("청강문화산업대학교");
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("학교 이름: %s"),
+		*SchoolName
+	);
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("학교 이름: %s"),
+		*GetClass()->GetDefaultObject<UMyGameInstance>()->SchoolName
+	);
 
-	// 문자열 자르기.
-	if (LogCharString.Contains(TEXT("unreal"), ESearchCase::IgnoreCase))
+	UE_LOG(LogTemp, Log, TEXT("===================="));
+
+	// 학생/선생님 객체 생성.
+	UStudent* Student = NewObject<UStudent>();
+	UTeacher* Teacher = NewObject<UTeacher>();
+
+	// 학생 클래스의 Getter/Setter 사용.
+	Student->SetName(TEXT("학생1"));
+	UE_LOG(LogTemp, Log, TEXT("새로운 학생 이름: %s"), *Student->GetName());
+
+	// 언리얼의 리플렉션을 활용해 프로퍼티 정보 설정 및 가져오기.
+
+	//UTeacher::StaticClass()->FindPropertyByName(TEXT("Name"));
+	FProperty* NameProp 
+		= Teacher->GetClass()->FindPropertyByName(TEXT("Name"));
+	if (NameProp)
 	{
-		// 시작 문자열 검색.
-		int32 Index
-			= LogCharString.Find(TEXT("unreal"), ESearchCase::IgnoreCase);
+		// 리플렉션을 활용해 현재 프로퍼티에 저장된 값 가져오기.
+		FString CurrentTeacherName;
+		NameProp->GetValue_InContainer(Teacher, &CurrentTeacherName);
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("현재 선생님 이름: %s"),
+			*CurrentTeacherName
+		);
 
-		FString EndString = LogCharString.Mid(Index);
-
-		UE_LOG(LogTemp, Log, TEXT("EndString: %s"), *EndString);
+		// 리플렉션을 활용해 프로퍼티에 새로운 값 저장.
+		FString NewTeacherName(TEXT("로니"));
+		NameProp->SetValue_InContainer(Teacher, &NewTeacherName);
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("새로운 선생님 이름: %s"),
+			*Teacher->GetName()
+		);
 	}
 
-	// 문자열 나누기.
-	FString Left, Right;
-	if (LogCharString.Split(TEXT(" "), &Left, &Right))
+	// 함수 호출 (리플렉션 활용).
+	UFunction* DoLessonFunc 
+		= Teacher->GetClass()->FindFunctionByName(TEXT("DoLesson"));
+
+	if (DoLessonFunc)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Split Result: %s 와 %s"), *Left, *Right);
-	}
-
-	// 변환 함수.
-	int32 IntValue = 32;
-	float FloatValue = 3.141592f;
-
-	FString FloatIntString
-		= FString::Printf(TEXT("Int: %d, Float: %f"), IntValue, FloatValue);
-
-	FString FloatString = FString::SanitizeFloat(FloatValue);
-	FString IntString = FString::FromInt(IntValue);
-
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FloatIntString);
-	UE_LOG(LogTemp, Log, TEXT("Int: %s, Float: %s"), *IntString, *FloatString);
-
-	// 문자열에서 숫자로 변환.
-	int32 IntValueFromString = FCString::Atoi(*IntString);
-	float FloatValueFromString = FCString::Atof(*FloatString);
-
-	UE_LOG(LogTemp, Log, TEXT("Int: %d, Float: %f"), 
-		IntValueFromString, FloatValueFromString);
-
-	// FNAME 사용.
-	FName Key1(TEXT("PELVIS"));
-	FName Key2(TEXT("pelvis"));
-
-	// 비교 결과.
-	FString Result = Key1 == Key2 ? TEXT("같음") : TEXT("다름");
-	UE_LOG(LogTemp, Log, TEXT("FName 비교 결과: %s"), *Result);
-
-	// 부하가 큰 경우.
-	for (int ix = 0; ix < 10000; ++ix)
-	{
-		// 키 값.
-		//FName SearchInNamePool = FName(TEXT("pelvis"));
-		const static FName SearchInNamePool = FName(TEXT("pelvis"));
+		Teacher->ProcessEvent(DoLessonFunc, nullptr);
 	}
 }
