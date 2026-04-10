@@ -17,9 +17,6 @@ class UEPART1_API UPerson : public UObject
 public:
 	UPerson();
 
-	UFUNCTION()
-	virtual void DoLesson();
-
 	FORCEINLINE const FString& GetName() const { return Name; }
 	FORCEINLINE void SetName(const FString& InName) { Name = InName; }
 

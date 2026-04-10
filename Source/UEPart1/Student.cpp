@@ -12,7 +12,7 @@ UStudent::UStudent()
 
 void UStudent::DoLesson()
 {
-	Super::DoLesson();
+	ILessonInterface::DoLesson();
 
 	UE_LOG(
 		LogTemp,
