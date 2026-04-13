@@ -6,6 +6,7 @@
 #include "Teacher.h"
 #include "Staff.h"
 #include "Card.h"
+#include "CourseInfo.h"
 
 UMyGameInstance::UMyGameInstance()
 {
@@ -19,93 +20,30 @@ void UMyGameInstance::Init()
 
 	UE_LOG(LogTemp, Log, TEXT("====================="));
 
-	// TArray는 언리얼 엔진이 지원하는 동적 배열
-	// STL의 std::vector와 동일한 기능 제공.
-	// 언리얼 오브젝트에 특화된 동적 배열.
-	TArray<UPerson*> Persons =
-	{
-		NewObject<UStudent>(),
-		NewObject<UTeacher>(),
-		NewObject<UStaff>()
-	};
+	// 학사 정보 객체 생성.
+	CourseInfo = NewObject<UCourseInfo>(this);
 
-	// 이름 출력.
-	for (const UPerson* Person : Persons)
-	{
-		UE_LOG(
-			LogTemp,
-			Log,
-			TEXT("구성원 이름: %s"),
-			*Person->GetName()
-		);
-	}
+	// 3명의 학생 추가.
+	UStudent* Student1 = NewObject<UStudent>();
+	Student1->SetName(TEXT("학생1"));
 
-	UE_LOG(LogTemp, Log, TEXT("====================="));
+	UStudent* Student2 = NewObject<UStudent>();
+	Student2->SetName(TEXT("학생2"));
 
-	for (UPerson* Person : Persons)
-	{
-		// 인터페이스로 형변환.
-		// 다운 캐스팅 (위험한 형변환 - RTTI 고려해야함).
-		ILessonInterface* LessonInterface
-			= Cast<ILessonInterface>(Person);
-		if (LessonInterface)
-		{
-			UE_LOG(
-				LogTemp,
-				Log,
-				TEXT("%s님은 수업에 참여할 수 있습니다."),
-				*Person->GetName()
-			);
-			LessonInterface->DoLesson();
-		}
-		else
-		{
-			UE_LOG(
-				LogTemp,
-				Log,
-				TEXT("%s님은 수업에 참여할 수 없습니다."),
-				*Person->GetName()
-			);
-		}
-	}
+	UStudent* Student3 = NewObject<UStudent>();
+	Student3->SetName(TEXT("학생3"));
+
+	// 알림에 구독.
+	CourseInfo->OnChanged.AddUObject(
+		Student1, &UStudent::GetNotification);
+	CourseInfo->OnChanged.AddUObject(
+		Student2, &UStudent::GetNotification);
+	CourseInfo->OnChanged.AddUObject(
+		Student3, &UStudent::GetNotification);
+
+	// 변경된 학사 정보 발행.
+	CourseInfo->ChangeCourseInfo(
+		SchoolName, TEXT("변경된 학사 정보"));
 
 	UE_LOG(LogTemp, Log, TEXT("====================="));
-
-	for (const auto Person : Persons)
-	{
-		// 카드 가져오기.
-		const UCard* OwnCard = Person->GetCard();
-		// 어서트.
-		ensureAlways(OwnCard);
-
-		//UE_LOG(
-		//	LogTemp,
-		//	Log,
-		//	TEXT("%s님이 소유한 카드 종류:  %d"),
-		//	*Person->GetName(),
-		//	OwnCard->GetCardType()
-		//);
-
-		// 열거형의 문자열 값 가져오기.
-		const UEnum* CardEnumType = FindObject<UEnum>(
-			nullptr,
-			TEXT("/Script/UEPart1.ECardType")
-		);
-
-		if (CardEnumType)
-		{
-			FString CardMetaData = CardEnumType->GetDisplayNameTextByValue(
-				(int64)OwnCard->GetCardType()
-			).ToString();
-
-			UE_LOG(
-				LogTemp,
-				Log,
-				TEXT("%s님이 소유한 카드 종류 %s"),
-				*Person->GetName(), 
-				*CardMetaData
-			);
-		}
-	}
-
 }
