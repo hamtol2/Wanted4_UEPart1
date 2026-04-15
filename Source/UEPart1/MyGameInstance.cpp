@@ -2,100 +2,68 @@
 
 
 #include "MyGameInstance.h"
-#include "Student.h"
-#include "StudentManager.h"
+#include "StudentData.h"
 
-// 유효성 검증 및 로그 출력 함수.
-void CheckUObjectIsValid(
-	const UObject* InObject, 
-	const FString& InTag)
+UMyGameInstance::UMyGameInstance()
 {
-	// 유효성 검사.
-	if (InObject->IsValidLowLevel())
-	{
-		UE_LOG(
-			LogTemp,
-			Log,
-			TEXT("[%s] 유효한 언리얼 오브젝트"),
-			*InTag
-		);
-	}
-	else
-	{
-		UE_LOG(
-			LogTemp,
-			Log,
-			TEXT("[%s] 유효하지 않은 언리얼 오브젝트"),
-			*InTag
-		);
-	}
-}
-
-void CheckUObjectIsNull(
-	const UObject* InObject,
-	const FString& InTag)
-{
-	// Null 여부 확인.
-	if (!InObject /*InObject == nullptr*/)
-	{
-		UE_LOG(
-			LogTemp,
-			Log,
-			TEXT("[%s] 널 포인터 언리얼 오브젝트"),
-			*InTag
-		);
-	}
-	else
-	{
-		UE_LOG(
-			LogTemp,
-			Log,
-			TEXT("[%s] 널 포인터가 아닌 언리얼 오브젝트"),
-			*InTag
-		);
-	}
 }
 
 void UMyGameInstance::Init()
 {
 	Super::Init();
 
-	// 객체 생성.
-	NonPropStudent = NewObject<UStudent>();
-	PropStudent = NewObject<UStudent>();
+	// 구조체 객체 생성.
+	FStudentData RawDataSource(23, TEXT("장세윤"));
 
-	NonPropStudents.Add(NewObject<UStudent>());
-	PropStudents.Add(NewObject<UStudent>());
-	
-	StudentManager = new FStudentManager(NewObject<UStudent>());
-}
+	// 파일로 저장하기 위한 경로 생성.
+	const FString SavePath = FPaths::Combine(
+		FPlatformMisc::ProjectDir(), TEXT("Saved")
+	);
 
-void UMyGameInstance::Shutdown()
-{
-	Super::Shutdown();
+	// 파일 저장 테스트를 위한 구간.
+	{
+		// 파일 이름.
+		const FString RawDataFileName(TEXT("RawData.bin"));
 
-	// 유효성 검사 및 로그 출력.
+		// 저장 경로 + 파일 이름.
+		FString RawDataAbsolutePath
+			= FPaths::Combine(SavePath, RawDataFileName);
 
-	// 삭제할 객체에서 관리하는 UObject 가져오기.
-	const UStudent* StudentInManager
-		= StudentManager->GetStudent();
+		// 경로 출력.
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("저장할 파일 전체 경로: %s"),
+			*RawDataAbsolutePath
+		);
 
-	// StudentManager 객체 삭제.
-	delete StudentManager;
-	StudentManager = nullptr;
+		// 경로 정리.
+		FPaths::MakeStandardFilename(RawDataAbsolutePath);
 
-	CheckUObjectIsNull(StudentInManager, TEXT("StudentInManager"));
-	CheckUObjectIsValid(StudentInManager, TEXT("StudentInManager"));
+		UE_LOG(
+			LogTemp,
+			Log,
+			TEXT("변경할 파일 전체 경로: %s"),
+			*RawDataAbsolutePath
+		);
 
-	CheckUObjectIsNull(NonPropStudent, TEXT("NonPropStudent"));
-	CheckUObjectIsValid(NonPropStudent, TEXT("NonPropStudent"));
+		// 직렬화 사용해서 저장.
+		// 파일 열기(쓰기 모드로).
+		FArchive* RawFileWriteAr
+			= IFileManager::Get().CreateFileWriter(
+				*RawDataAbsolutePath);
+		if (RawFileWriteAr)
+		{
+			// 파일에 기록.
+			*RawFileWriteAr << RawDataSource.Order;
+			*RawFileWriteAr << RawDataSource.Name;
 
-	CheckUObjectIsNull(PropStudent, TEXT("PropStudent"));
-	CheckUObjectIsValid(PropStudent, TEXT("PropStudent"));
-
-	CheckUObjectIsNull(NonPropStudents[0], TEXT("NonPropStudents"));
-	CheckUObjectIsValid(NonPropStudents[0], TEXT("NonPropStudents"));
-
-	CheckUObjectIsNull(PropStudents[0], TEXT("PropStudents"));
-	CheckUObjectIsValid(PropStudents[0], TEXT("PropStudents"));
+			// 파일 닫기.
+			RawFileWriteAr->Close();
+			
+			// 메모리 해제.
+			delete RawFileWriteAr;
+			RawFileWriteAr = nullptr;
+		}
+	}
 }
