@@ -6,6 +6,26 @@
 #include "Student.h"
 #include "JsonObjectConverter.h"
 
+// static 변수 초기화.
+// /Game -> 프로젝트 경로/Content 경로를 가리킴.
+const FString UMyGameInstance::PackageName = TEXT("/Game/Student");
+const FString UMyGameInstance::AssetName = TEXT("Student");
+
+// UStudent 출력용 함수.
+void PrintStudentInfo(
+	const UStudent* InStudent, 
+	const FString& InTag)
+{
+	UE_LOG(
+		LogTemp,
+		Log,
+		TEXT("[%s] 이름: %s, 순번: %d"),
+		*InTag,
+		*InStudent->GetName(),
+		InStudent->GetOrder()
+	);
+}
+
 UMyGameInstance::UMyGameInstance()
 {
 }
@@ -237,15 +257,38 @@ void UMyGameInstance::Init()
 				UStudent::StaticClass(),
 				JsonStudentDest))
 			{
-				UE_LOG(
-					LogTemp,
-					Log,
-					TEXT("[JsonData] 이름: %s, 순번: %d"),
-					*JsonStudentDest->GetName(),
-					JsonStudentDest->GetOrder()
-				);
+				//UE_LOG(
+				//	LogTemp,
+				//	Log,
+				//	TEXT("[JsonData] 이름: %s, 순번: %d"),
+				//	*JsonStudentDest->GetName(),
+				//	JsonStudentDest->GetOrder()
+				//);
+				PrintStudentInfo(JsonStudentDest, TEXT("JsonData"));
 			}
 		}
 	}
+
+}
+
+void UMyGameInstance::SaveStudentPackage() const
+{
+	// 패키지 생성.
+	UPackage* StudentPackage = CreatePackage(*PackageName);
+	// 패키지에 사용할 플래그 지정.
+	// RF_Public | RF_Standalone 두 플래그 값이 가장 일반적.
+	EObjectFlags ObjectFlag = RF_Public | RF_Standalone;
+
+	// 패키지에 저장할 언리얼 오브젝트 생성.
+	UStudent* Student = NewObject<UStudent>(
+		StudentPackage,
+		UStudent::StaticClass(),
+		*AssetName,
+		ObjectFlag
+	);
+	Student->SetName(TEXT("장세윤"));
+	Student->SetOrder(11);
+
+	// 패키지 저장.
 
 }
