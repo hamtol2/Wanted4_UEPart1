@@ -23,6 +23,12 @@ protected:
 	// 패키지 저장 함수.
 	void SaveStudentPackage() const;
 
+	// 패키지 로드 함수.
+	void LoadStudentPackage() const;
+
+	// 경로 기반으로 언리얼 오브젝트를 로드하는 함수.
+	void LoadStudentObject() const;
+
 private:
 
 	// 패키지 이름.

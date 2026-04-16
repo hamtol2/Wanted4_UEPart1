@@ -27,9 +27,9 @@ public:
 
 private:
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, Category = "Data")
 	int32 Order;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly, Category = "Data")
 	FString Name;
 };
